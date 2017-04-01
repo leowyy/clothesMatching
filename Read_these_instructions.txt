@@ -1,3 +1,7 @@
-Change terminal working directory to the folder with the csv
-Run python -m SimpleHTTPServer
+Download clothes folders from Jie Xun’s link
+Put the Tops folder into ir_corpus
+Change your terminal working directory to the folder with index.html
+Run “python -m SimpleHTTPServer”
 Open http://localhost:8000/ in your browser
+
+
