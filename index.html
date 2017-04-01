@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <!-- Link to custom CSS file, "index.css" -->
+	    <link rel="stylesheet" type="text/css" href="index.css">
+	    <!-- Link to external Javascript library -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js" type="text/javascript" ></script>
+	    <!-- Link to Papaparse  -->
+  		<script src="papaparse.min.js"></script>
+  		<!-- Link to custom Javascript file, "index.js" -->
+  		<script src="index.js"></script>
+
+    	<title>Yux Clothes Matching</title>
+
+	</head>
+	<body>
+		<h1>Yux Clothes Matching Algorithm</h1>
+
+		<!-- Uploading to Database -->
+
+		<b><p>First, upload to the database</p></b>
+		<input type="file" id="csv-file" name="files"/>
+		<p id = "errorMessage" style="display:none "> <font color="red">
+			ERROR: Please upload to the database first </font></p>
+
+		<!-- Generate or choose query -->
+
+		<b><p>Next, generate or choose a query photo</p></b>
+		<input type="button" id="create-random-query" value="Create Random Query"/>
+		<input type="file" id="query-file" name="files"/>
+		</br></br>
+		<img id="queryImage" src="grey.jpg" width="180" height="250">
+
+		<!-- Show matches -->
+		
+		<p><u> Matched Labels </u><span id="match-label"></span></p>
+		<p>
+			<img id="match-image-0" src="grey.jpg" width="180" height="250">
+			<img id="match-image-1" src="grey.jpg" width="180" height="250">
+			<img id="match-image-2" src="grey.jpg" width="180" height="250">
+		</p>
+		<p> Match 1: <span id="match-label-0"></span></p>
+		<p> Match 2: <span id="match-label-1"></span></p>
+		<p> Match 3: <span id="match-label-2"></span></p>
+
+	</body>
+</html>
