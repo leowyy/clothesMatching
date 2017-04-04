@@ -6,10 +6,31 @@ var attriNum;
 var queryLabel;
 var queryIndex;
 var queryVector;
+var kSimTable;
+var backendQuery;
+var classifier;
 
+//get excel database
 function readCSV(evt) {
 	document.getElementById("errorMessage").style.display = "none";
 	var file = evt.target.files[0];
+
+	console.log("file");
+	console.log(file.name);
+
+
+var name = file.name
+	if(name.includes("tops")){
+	classifier = "Tops";
+	
+	}else if(name.includes("bottoms")){
+	classifier = "Bottoms";
+	}else if(name.includes("shoes")){
+	classifier = "Shoes";
+	}
+
+console.log(classifier);
+
     Papa.parse(file, {
         headers: true,
         download: true,
@@ -48,6 +69,7 @@ function readQuery(evt) {
 	}
 
 	var file = evt.target.files[0];
+	console.log("file");
     console.log(file);
     var filePath = createPathToImage(file.name);
     document.getElementById("queryImage").src = filePath;
@@ -59,7 +81,11 @@ function readQuery(evt) {
     retrieveSimilarClothing();
 };
 
+//query from backend will contain query vector and a classifier
 function generateRandomQuery(){
+
+	
+
 	if (typeof database == 'undefined'){
 		document.getElementById("errorMessage").style.display = 'block';
 		return;
@@ -73,6 +99,31 @@ function generateRandomQuery(){
 	queryIndex = i;
 	queryVector = database[queryIndex];
 
+	var confidentPositive = 0;
+	var notConfident = 0;
+	var confidentNegative = 0;
+
+
+	for(var y = 0; y < attriNum; y++){ 
+
+		if(queryVector[y]<=0.4){
+			confidentNegative++;
+		}
+	
+		else if(queryVector[y]<0.8){
+			notConfident++;
+		}
+
+		else if(queryVector[y]>=0.8){
+			confidentPositive++;
+		}
+
+	} 
+
+
+
+	document.getElementById("confidence").innerHTML = confidentPositive + " " + notConfident + " " + confidentNegative;
+
 	retrieveSimilarClothing();
 };
 
@@ -82,13 +133,16 @@ function retrieveSimilarClothing(){
 	var tfIdfTable = computeTfIdf(database, idfTable);
 
 	var queryTable = normalizeQuery(queryVector, idfTable);
-	var k = 3;
+	var k = 6;
 	var index = selectBestK(queryTable, tfIdfTable, k);
+	console.log("index");
 	console.log(index);
 
+	console.log("database"); 
+	console.log(database); 
 	// Send results to front-end
 	for (var i = 0; i < k; i++){
-		document.getElementById("match-label-"+i).innerHTML = labels[index[i]];
+		document.getElementById("match-label-"+i).innerHTML = labels[index[i]] + " " + kSimTable[i];
 	}
 
 	for (var i = 0; i < k; i++){
@@ -161,6 +215,7 @@ function normalizeQuery(query, idfTable){
 		queryTable[y] = query[y]*idfTable[y];  
 		queryMag += queryTable[y]* queryTable[y];
 	}  
+	console.log("queryTable"); 
 	console.log(queryTable); 
 	queryMag = Math.sqrt(queryMag);
 
@@ -177,6 +232,8 @@ function selectBestK(query, tfIdfTable, k){
 	var dimensions = [ tfIdfTable.length, tfIdfTable[0].length ];
 	var docNum = dimensions[0];
 	var attriNum = dimensions[1];
+	
+	kSimTable = [];
 
 	var cosSimTable = [];
 	for(var x = 0; x < docNum; x++){
@@ -190,13 +247,20 @@ function selectBestK(query, tfIdfTable, k){
 	console.log(cosSimTable);
 
 	var index = [];
-	while(index.length < 3){
+	while(index.length < k){
 	//for each document, take the largest cossim and store the index
 		var max_index = cosSimTable.indexOf(Math.max(...cosSimTable));
-		if (max_index != queryIndex)	//should not return itself
+		if (max_index != queryIndex){	//should not return itself
 			index.push(max_index);
+			//log the cosine similarity of max_index into a global var to show later on
+            kSimTable.push(cosSimTable[max_index]);}
+
 		cosSimTable[max_index]=-1;		//remove largest value and iterate again
 	}  
+
+	console.log("kSimTable latest");
+	console.log(kSimTable);
+
 	return index;
 };
 
@@ -209,13 +273,13 @@ function randomIntFromInterval(min,max)
 // eg: checkshirts0.jpg -> ir_corpus/Tops/checkshirts0.jpg
 function createPathToImage(filename)
 {
-	return "ir_corpus/Tops/" + filename
+	return "ir_corpus/" + classifier + "/"  + filename
 };
 
 // eg: checkshirts0.jpg -> bottlenecks/Clothes/Tops/checkshirts0.jpg.txt
 function createLabelFromImage(filename)
 {
-	return "bottlenecks/Clothes/Tops/" + filename + ".txt"
+	return "bottlenecks/Clothes/" + classifier + "/" + filename + ".txt"
 };
 
 // eg: bottlenecks/Clothes/Tops/checkshirts0.jpg.txt -> checkshirts0.jpg 
@@ -227,6 +291,13 @@ function createImagefromLabel(filename)
 
 	return partsAgain[0]+"."+partsAgain[1]
 };
+
+function logSentiment()
+{
+
+
+
+}
 
 // All event bindings
 $(document).ready(function(){
