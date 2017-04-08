@@ -1,13 +1,12 @@
 // Global variables
-var database;
-var labels;
-var docNum;
-var attriNum;
-var queryLabel;
-var queryIndex;
-var queryVector;
+var database;			// CSV file, all data points
+var labels;				// Image labels in CSV, eg bottlenecks/Clothes/Tops/checkshirts0.jpg.txt
+var docNum;				// Number of images in database
+var attriNum;			// Number of attributes in database
+var queryLabel;			// Image label of query in database
+var queryIndex;			// Index of query in database
+var queryVector;		// Vector of query
 var kSimTable;
-var backendQuery;
 var classifier;
 
 //get excel database
@@ -15,21 +14,16 @@ function readCSV(evt) {
 	document.getElementById("errorMessage").style.display = "none";
 	var file = evt.target.files[0];
 
-	console.log("file");
-	console.log(file.name);
-
-
-var name = file.name
+	var name = file.name
 	if(name.includes("tops")){
-	classifier = "Tops";
-	
+		classifier = "Tops";
 	}else if(name.includes("bottoms")){
-	classifier = "Bottoms";
+		classifier = "Bottoms";
 	}else if(name.includes("shoes")){
-	classifier = "Shoes";
+		classifier = "Shoes";
 	}
 
-console.log(classifier);
+	console.log(classifier);
 
     Papa.parse(file, {
         headers: true,
@@ -56,7 +50,7 @@ function saveData(data) {
 function extractLabels(){
 	var labels = [];
 	for (var i = 0; i < database.length; i++){
-		labels.push(database[i][0])			// Get label
+		labels.push(database[i][0])			// Get labels
 		database[i].splice(0,1);			// Remove it from database
 	}
 	return labels
@@ -84,8 +78,6 @@ function readQuery(evt) {
 //query from backend will contain query vector and a classifier
 function generateRandomQuery(){
 
-	
-
 	if (typeof database == 'undefined'){
 		document.getElementById("errorMessage").style.display = 'block';
 		return;
@@ -93,7 +85,12 @@ function generateRandomQuery(){
 
 	var i = randomIntFromInterval(0,docNum-1);
 	var image = createImagefromLabel(labels[i]);
-	document.getElementById("queryImage").src = createPathToImage(image);
+	if (!labels[i].includes("Unlabelled")){
+		document.getElementById("queryImage").src = createPathToImage(image,1);
+	}
+	else {
+		document.getElementById("queryImage").src = createPathToImage(image,0);
+	}
 
 	queryLabel = labels[i];
 	queryIndex = i;
@@ -120,8 +117,6 @@ function generateRandomQuery(){
 
 	} 
 
-
-
 	document.getElementById("confidence").innerHTML = confidentPositive + " " + notConfident + " " + confidentNegative;
 
 	retrieveSimilarClothing();
@@ -147,7 +142,13 @@ function retrieveSimilarClothing(){
 
 	for (var i = 0; i < k; i++){
 		var image = createImagefromLabel(labels[index[i]])
-		var imagePath = createPathToImage(image);
+		if (!labels[index[i]].includes("Unlabelled")){
+			var imagePath = createPathToImage(image,1);
+		}
+		else {
+			var imagePath = createPathToImage(image,0);
+		} 
+		
 		document.getElementById("match-image-"+i).src = imagePath;
 	}
 };
@@ -158,8 +159,8 @@ function computeIdf(database){
 	var dimensions = [ database.length, database[0].length ];
 	var docNum = dimensions[0];
 	var attriNum = dimensions[1];
-console.log("attriNum");
-console.log(attriNum);
+	console.log("attriNum");
+	console.log(attriNum);
 	var idfTable = [];
 	var threshold = 0.7; // Used as a threshold to consider as inside document
 
@@ -195,7 +196,6 @@ function computeTfIdf(database, idfTable){
 			tfIdfTable[x][y] = (1+Math.log(1+database[x][y])) * idfTable[y]; //tf-idf
 
 			//this part edits the importance of certain vectors
-
 
 			magTable[x] += tfIdfTable[x][y]* tfIdfTable[x][y];
 		}    
@@ -277,9 +277,14 @@ function randomIntFromInterval(min,max)
 };
 
 // eg: checkshirts0.jpg -> ir_corpus/Tops/checkshirts0.jpg
-function createPathToImage(filename)
-{
-	return "ir_corpus/" + classifier + "/"  + filename
+function createPathToImage(filename,labelled)
+{	
+	if (labelled){
+		return "ir_corpus/labelled_clothes/" + classifier + "/"  + filename
+	}
+	else{
+		return "ir_corpus/unlabelled_clothes/" + classifier + "/"  + filename
+	}
 };
 
 // eg: checkshirts0.jpg -> bottlenecks/Clothes/Tops/checkshirts0.jpg.txt
@@ -300,7 +305,6 @@ function createImagefromLabel(filename)
 
 function logSentiment()
 {
-
 
 
 }
