@@ -158,7 +158,8 @@ function computeIdf(database){
 	var dimensions = [ database.length, database[0].length ];
 	var docNum = dimensions[0];
 	var attriNum = dimensions[1];
-
+console.log("attriNum");
+console.log(attriNum);
 	var idfTable = [];
 	var threshold = 0.7; // Used as a threshold to consider as inside document
 
@@ -170,6 +171,7 @@ function computeIdf(database){
 			}		
 		} 
 		var idf = Math.log(docNum/docf); //note log is natural logarithm
+
 
 		//if frequency 0, unable to give relavant doc, set idf = 0 instead of infinity
 		if (docf ==0){ idf = 0;}
@@ -191,6 +193,10 @@ function computeTfIdf(database, idfTable){
 		magTable[x]= 0;
 		for(var y = 0; y < attriNum; y++){ 
 			tfIdfTable[x][y] = (1+Math.log(1+database[x][y])) * idfTable[y]; //tf-idf
+
+			//this part edits the importance of certain vectors
+
+
 			magTable[x] += tfIdfTable[x][y]* tfIdfTable[x][y];
 		}    
 	}
