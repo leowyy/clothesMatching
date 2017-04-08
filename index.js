@@ -17,7 +17,7 @@ var championsTable;
 //get excel database
 function readCSV(evt) {
 
-	datepre = new Date();
+
 	document.getElementById("errorMessage").style.display = "none";
 	var file = evt.target.files[0];
 
@@ -63,15 +63,18 @@ function saveData(data) {
 	// Compute tf-idf table once
 	idfTable = computeIdf(database);
 	tfIdfTable = computeTfIdf(database, idfTable);
-	datepre = datepre - new Date();
-	console.log("datepre");
-	console.log(datepre);
 
+    datepre = new Date();
 	// Create champions table
 	championsTable = [];
 	for (var i = 0; i < attriNum; i++){
 		championsTable.push(getChampionList(tfIdfTable, i));
 	}
+
+	datepre = datepre - new Date();
+	console.log("datepre");
+	console.log(datepre);
+
 	console.log("championsTable");
 	console.log(championsTable);
 };
@@ -150,17 +153,20 @@ function generateRandomQuery(){
 
 	document.getElementById("confidence").innerHTML = confidentPositive + " " + notConfident + " " + confidentNegative;
 	retrieveSimilarClothing();
+	date = new Date();
+
 	champions_retrieveSimilarClothing();
+	date = date - new Date();
+    console.log("datelatest");
+    console.log(date);
+
 };
 
 function retrieveSimilarClothing(){
-	date = new Date();
+
 	var queryTable = normalizeQuery(queryVector, idfTable);
 	var k = 6;
 	var index = selectBestK(queryTable, tfIdfTable, k);
-	date = date - new Date();
-	console.log("date");
-	console.log(date);
 
 
 	// Send results to front-end
@@ -209,8 +215,18 @@ function champions_getSearchList(){
 	var searchList = [];
 	var listNum = championsTable[0].length;
 	var threshold = 0.7;
+    var maxColIndex;
+    var colMag = 0;
+     for (var i = 0; i < 16; i++){
+		if (queryVector[i] >= colMag){
+		    colMag = queryVector[i];
+		    maxColIndex = i;
+		}
+	}
+    searchList = searchList.concat(championsTable[maxColIndex]);
 
-	for (var i = 0; i < attriNum; i++){
+
+	for (var i = 16; i < attriNum; i++){
 		// Based on confidence of each attribute, get length of the championsList to use
 		if (queryVector[i] >= threshold){
 			searchList = searchList.concat(championsTable[i]);
