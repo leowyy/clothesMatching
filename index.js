@@ -10,6 +10,7 @@ var idfTable;			// Generated once during saveData
 var tfIdfTable;			// Generated once during saveData
 var kSimTable;
 var classifier;			// Either Tops/Bottoms/Shoes
+var championsTable;
 
 //get excel database
 function readCSV(evt) {
@@ -45,12 +46,27 @@ function saveData(data) {
     database.splice(database.length-1,1); 	// Remove end of blanks
 
     labels = extractLabels();
-	docNum = database.length;
-	attriNum = database[0].length;
-	
+
+    var dimensions = [ database.length, database[0].length ];
+	docNum = dimensions[0];
+	attriNum = dimensions[1];
+
+	console.log("docNum");
+	console.log(docNum);
+	console.log("attriNum");
+	console.log(attriNum);
+
 	// Compute tf-idf table once
 	idfTable = computeIdf(database);
 	tfIdfTable = computeTfIdf(database, idfTable);
+
+	// Create champions table
+	championsTable = [];
+	for (var i = 0; i < attriNum; i++){
+		championsTable.push(getChampionList(tfIdfTable, i));
+	}
+	console.log("championsTable");
+	console.log(championsTable);
 };
 
 function extractLabels(){
@@ -103,6 +119,8 @@ function generateRandomQuery(){
 	queryIndex = i;
 	queryVector = database[queryIndex];
 
+	console.log(queryVector);
+
 	var confidentPositive = 0;
 	var notConfident = 0;
 	var confidentNegative = 0;
@@ -125,8 +143,8 @@ function generateRandomQuery(){
 	} 
 
 	document.getElementById("confidence").innerHTML = confidentPositive + " " + notConfident + " " + confidentNegative;
-
 	retrieveSimilarClothing();
+	champions_retrieveSimilarClothing();
 };
 
 function retrieveSimilarClothing(){
@@ -155,12 +173,46 @@ function retrieveSimilarClothing(){
 	}
 };
 
+// Champions Function: retrieveSimilarClothing from the championList
+function champions_retrieveSimilarClothing(){
+
+	var searchList = champions_getSearchList();		// Get the search list from the championsTable
+	var queryTable = normalizeQuery(queryVector, idfTable);
+	var k = 6;
+	var index = champions_selectBestK(queryTable, tfIdfTable, k, searchList);
+	console.log("Champions index");
+	console.log(index);
+	for (var i = 0; i < k; i++){
+		var image = createImagefromLabel(labels[index[i]])
+		if (!labels[index[i]].includes("Unlabelled")){
+			var imagePath = createPathToImage(image,1);
+		}
+		else {
+			var imagePath = createPathToImage(image,0);
+		} 
+		
+		document.getElementById("champions-match-image-"+i).src = imagePath;
+	}
+
+};
+
+// Champions Function:  Gets the search list from championsTable according to queryVector
+function champions_getSearchList(){
+	var searchList = [];
+	var listNum = championsTable[0].length;
+
+	for (var i = 0; i < attriNum; i++){
+		// Based on confidence of each attribute, get length of the championsList to use
+		var cutoff = Math.ceil(listNum * queryVector[i]);
+		searchList = arrayUnique( searchList.concat(championsTable[i].slice(0,cutoff)) );
+
+	}
+	return searchList;
+};
+
 // Cosine similarity functions
 function computeIdf(database){
 	// threshold can be changed
-	var dimensions = [ database.length, database[0].length ];
-	var docNum = dimensions[0];
-	var attriNum = dimensions[1];
 
 	var idfTable = [];
 	var threshold = 0.7; // Used as a threshold to consider as inside document
@@ -174,7 +226,6 @@ function computeIdf(database){
 		} 
 		var idf = Math.log(docNum/docf); //note log is natural logarithm
 
-
 		//if frequency 0, unable to give relavant doc, set idf = 0 instead of infinity
 		if (docf ==0){ idf = 0;}
 		idfTable[y] = 1 + idf;  //CHANGE if necessary
@@ -184,9 +235,6 @@ function computeIdf(database){
 
 // Calculate tfid and magnitudes of each doc, obtain normalized tfIdfTable
 function computeTfIdf(database, idfTable){
-	var dimensions = [ database.length, database[0].length ];
-	var docNum = dimensions[0];
-	var attriNum = dimensions[1];
 
 	var tfIdfTable = [];
 	var magTable = [];
@@ -197,8 +245,12 @@ function computeTfIdf(database, idfTable){
 			tfIdfTable[x][y] = (1+Math.log(1+database[x][y])) * idfTable[y]; //tf-idf
 
 			//this part edits the importance of certain vectors
+			//Decrease importance of no secondary colours
+	        if(y == 32){ tfIdfTable[x][y] = tfIdfTable[x][y] * 0.1 }
 
-			magTable[x] += tfIdfTable[x][y]* tfIdfTable[x][y];
+	        // //Increase importance of primary colours
+	        if(y < 16 ){ tfIdfTable[x][y] = tfIdfTable[x][y] * 3 }
+		 	magTable[x] += tfIdfTable[x][y]* tfIdfTable[x][y];
 		}    
 	}
 
@@ -236,9 +288,6 @@ function normalizeQuery(query, idfTable){
 
 // Compute cosine similarity between query and documents, select the top k results
 function selectBestK(query, tfIdfTable, k){
-	var dimensions = [ tfIdfTable.length, tfIdfTable[0].length ];
-	var docNum = dimensions[0];
-	var attriNum = dimensions[1];
 	
 	kSimTable = [];
 
@@ -271,7 +320,59 @@ function selectBestK(query, tfIdfTable, k){
 	return index;
 };
 
+// Champions Function: Compute cosine similarity between query and documents, select the top k results
+function champions_selectBestK(query, tfIdfTable, k, searchList){
 
+	var cosSimTable = [];
+	for(var x = 0; x < searchList.length; x++){
+		var docIndexToCompare = searchList[x];
+		cosSimTable[x]=0;
+		for(var y = 0; y < attriNum; y++){ 
+			cosSimTable[x] += query[y] * tfIdfTable[docIndexToCompare][y];
+		}    
+	} 
+
+	console.log("cosSimTable");
+	console.log(cosSimTable);
+
+	var index = [];
+	while(index.length < k){
+	//for each document, take the largest cossim and store the index
+		var max_index_in_searchList = cosSimTable.indexOf(Math.max(...cosSimTable));
+		var max_index = searchList[max_index_in_searchList];
+		if (max_index != queryIndex){	//should not return itself
+			index.push(max_index);
+			//log the cosine similarity of max_index into a global var to show later on
+            kSimTable.push(cosSimTable[max_index]);}
+
+		cosSimTable[max_index_in_searchList]=-1;		//remove largest value and iterate again
+	}  
+
+	return index;
+};
+
+// Extracts out champion list for each clothing attribute
+function getChampionList(tfIdfTable, attriNumReferenced){
+
+	if (attriNumReferenced > attriNum){
+		console.log("ERROR: Exceeded attribute number");
+		return 0;
+	}
+	var championListSize = 0.01;   				// size of champion list relative to size of corpus
+	var k = Math.ceil(championListSize*docNum);
+	var championList = [];
+	var tfIdfColumn = [];
+	for (var i = 0; i < docNum; i++){
+		tfIdfColumn[i] = tfIdfTable[i][attriNumReferenced];
+	}
+
+	for (var j = 0; j < k; j++){
+		var max_index = tfIdfColumn.indexOf(Math.max(...tfIdfColumn));
+		championList[j] = max_index;
+		tfIdfColumn[max_index]=-1;
+	}
+	return championList;
+};
 
 // ALL HELPER FUNCTIONS
 function randomIntFromInterval(min,max)
@@ -306,11 +407,16 @@ function createImagefromLabel(filename)
 	return partsAgain[0]+"."+partsAgain[1]
 };
 
-function logSentiment()
-{
-
-
-}
+function arrayUnique(array) {
+    var a = array.concat();
+    for(var i=0; i<a.length; ++i) {
+        for(var j=i+1; j<a.length; ++j) {
+            if(a[i] === a[j])
+                a.splice(j--, 1);
+        }
+    }
+    return a;
+};
 
 // All event bindings
 $(document).ready(function(){
