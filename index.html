@@ -26,15 +26,15 @@
 		<!-- Generate or choose query -->
 
 		<b><p>Next, generate or choose a query photo</p></b>
-		<input type="button" id="create-random-query" value="Create Random Query"/>
-		<input type="file" id="query-file" name="files"/>
-		</br></br>
 		<img id="queryImage" src="grey.jpg" width="180" height="250">
 		<p> Query Label: <span id="queryLabel"></span> </p>
+		<input type="button" id="create-random-query" value="Create Random Query"/>
+		<input type="file" id="query-file" name="files"/>
 
 		<!-- Show matches -->
-		<p> Query confidence (+,~,-): <span id="confidence"></span></p>
+		
 		<p><u> Matched Labels </u><span id="match-label"></span></p>
+		<p> Matched confidence (+,~,-): <span id="confidence"></span></p>
 		<p>
 			<img id="match-image-0" src="grey.jpg" width="180" height="250">
 			<img id="match-image-1" src="grey.jpg" width="180" height="250">
@@ -43,6 +43,18 @@
 			<img id="match-image-4" src="grey.jpg" width="180" height="250">
 			<img id="match-image-5" src="grey.jpg" width="180" height="250">
 		</p>
+
+		<p><u> Matched Labels from Champions List </u><span id="champion-match-label"></span></p>
+		<p>
+			<img id="champions-match-image-0" src="grey.jpg" width="180" height="250">
+			<img id="champions-match-image-1" src="grey.jpg" width="180" height="250">
+			<img id="champions-match-image-2" src="grey.jpg" width="180" height="250">
+			<img id="champions-match-image-3" src="grey.jpg" width="180" height="250">
+			<img id="champions-match-image-4" src="grey.jpg" width="180" height="250">
+			<img id="champions-match-image-5" src="grey.jpg" width="180" height="250">
+		</p>
+
+		<p> Labels of normal matches </p>
 		<p> Match 1: <span id="match-label-0"></span></p>
 		<p> Match 2: <span id="match-label-1"></span></p>
 		<p> Match 3: <span id="match-label-2"></span></p>
