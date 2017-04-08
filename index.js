@@ -10,10 +10,14 @@ var idfTable;			// Generated once during saveData
 var tfIdfTable;			// Generated once during saveData
 var kSimTable;
 var classifier;			// Either Tops/Bottoms/Shoes
+var date;
+var datepre;
 var championsTable;
 
 //get excel database
 function readCSV(evt) {
+
+	datepre = new Date();
 	document.getElementById("errorMessage").style.display = "none";
 	var file = evt.target.files[0];
 
@@ -26,7 +30,7 @@ function readCSV(evt) {
 		classifier = "Shoes";
 	}
 
-	console.log(classifier);
+
 
     Papa.parse(file, {
         headers: true,
@@ -59,6 +63,9 @@ function saveData(data) {
 	// Compute tf-idf table once
 	idfTable = computeIdf(database);
 	tfIdfTable = computeTfIdf(database, idfTable);
+	datepre = datepre - new Date();
+	console.log("datepre");
+	console.log(datepre);
 
 	// Create champions table
 	championsTable = [];
@@ -85,8 +92,7 @@ function readQuery(evt) {
 	}
 
 	var file = evt.target.files[0];
-	console.log("file");
-    console.log(file);
+
     var filePath = createPathToImage(file.name);
     document.getElementById("queryImage").src = filePath;
 
@@ -119,7 +125,7 @@ function generateRandomQuery(){
 	queryIndex = i;
 	queryVector = database[queryIndex];
 
-	console.log(queryVector);
+
 
 	var confidentPositive = 0;
 	var notConfident = 0;
@@ -148,12 +154,14 @@ function generateRandomQuery(){
 };
 
 function retrieveSimilarClothing(){
-
+	date = new Date();
 	var queryTable = normalizeQuery(queryVector, idfTable);
 	var k = 6;
 	var index = selectBestK(queryTable, tfIdfTable, k);
-	console.log("index");
-	console.log(index);
+	date = date - new Date();
+	console.log("date");
+	console.log(date);
+
 
 	// Send results to front-end
 	for (var i = 0; i < k; i++){
@@ -189,8 +197,8 @@ function champions_retrieveSimilarClothing(){
 		}
 		else {
 			var imagePath = createPathToImage(image,0);
-		} 
-		
+		}
+
 		document.getElementById("champions-match-image-"+i).src = imagePath;
 	}
 
@@ -275,8 +283,7 @@ function normalizeQuery(query, idfTable){
 		queryTable[y] = query[y]*idfTable[y];  
 		queryMag += queryTable[y]* queryTable[y];
 	}  
-	console.log("queryTable"); 
-	console.log(queryTable); 
+
 	queryMag = Math.sqrt(queryMag);
 
 	//Normalizing step
@@ -300,8 +307,7 @@ function selectBestK(query, tfIdfTable, k){
 		}    
 	} 
 
-	console.log("cosSimTable");
-	console.log(cosSimTable);
+
 
 	var index = [];
 	while(index.length < k){
@@ -315,8 +321,7 @@ function selectBestK(query, tfIdfTable, k){
 		cosSimTable[max_index]=-1;		//remove largest value and iterate again
 	}  
 
-	console.log("kSimTable latest");
-	console.log(kSimTable);
+
 
 	return index;
 };
@@ -328,10 +333,10 @@ function champions_selectBestK(query, tfIdfTable, k, searchList){
 	for(var x = 0; x < searchList.length; x++){
 		var docIndexToCompare = searchList[x];
 		cosSimTable[x]=0;
-		for(var y = 0; y < attriNum; y++){ 
+		for(var y = 0; y < attriNum; y++){
 			cosSimTable[x] += query[y] * tfIdfTable[docIndexToCompare][y];
-		}    
-	} 
+		}
+	}
 
 	console.log("cosSimTable");
 	console.log(cosSimTable);
@@ -347,7 +352,7 @@ function champions_selectBestK(query, tfIdfTable, k, searchList){
             kSimTable.push(cosSimTable[max_index]);}
 
 		cosSimTable[max_index_in_searchList]=-1;		//remove largest value and iterate again
-	}  
+	}
 
 	return index;
 };
