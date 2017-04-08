@@ -200,12 +200,13 @@ function champions_retrieveSimilarClothing(){
 function champions_getSearchList(){
 	var searchList = [];
 	var listNum = championsTable[0].length;
+	var threshold = 0.7;
 
 	for (var i = 0; i < attriNum; i++){
 		// Based on confidence of each attribute, get length of the championsList to use
-		var cutoff = Math.ceil(listNum * queryVector[i]);
-		searchList = arrayUnique( searchList.concat(championsTable[i].slice(0,cutoff)) );
-
+		if (queryVector[i] >= threshold){
+			searchList = searchList.concat(championsTable[i]);
+		}		
 	}
 	return searchList;
 };
@@ -340,7 +341,7 @@ function champions_selectBestK(query, tfIdfTable, k, searchList){
 	//for each document, take the largest cossim and store the index
 		var max_index_in_searchList = cosSimTable.indexOf(Math.max(...cosSimTable));
 		var max_index = searchList[max_index_in_searchList];
-		if (max_index != queryIndex){	//should not return itself
+		if (max_index != queryIndex && index.indexOf(max_index) == -1){	//should not return itself or duplicates
 			index.push(max_index);
 			//log the cosine similarity of max_index into a global var to show later on
             kSimTable.push(cosSimTable[max_index]);}
