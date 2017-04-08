@@ -10,9 +10,12 @@ var idfTable;			// Generated once during saveData
 var tfIdfTable;			// Generated once during saveData
 var kSimTable;
 var classifier;			// Either Tops/Bottoms/Shoes
-
+var date;
+var datepre;
 //get excel database
 function readCSV(evt) {
+
+	datepre = new Date();
 	document.getElementById("errorMessage").style.display = "none";
 	var file = evt.target.files[0];
 
@@ -25,7 +28,7 @@ function readCSV(evt) {
 		classifier = "Shoes";
 	}
 
-	console.log(classifier);
+
 
     Papa.parse(file, {
         headers: true,
@@ -51,6 +54,9 @@ function saveData(data) {
 	// Compute tf-idf table once
 	idfTable = computeIdf(database);
 	tfIdfTable = computeTfIdf(database, idfTable);
+	datepre = datepre - new Date();
+	console.log("datepre");
+	console.log(datepre);
 };
 
 function extractLabels(){
@@ -69,8 +75,7 @@ function readQuery(evt) {
 	}
 
 	var file = evt.target.files[0];
-	console.log("file");
-    console.log(file);
+
     var filePath = createPathToImage(file.name);
     document.getElementById("queryImage").src = filePath;
 
@@ -130,12 +135,14 @@ function generateRandomQuery(){
 };
 
 function retrieveSimilarClothing(){
-
+	date = new Date();
 	var queryTable = normalizeQuery(queryVector, idfTable);
 	var k = 6;
 	var index = selectBestK(queryTable, tfIdfTable, k);
-	console.log("index");
-	console.log(index);
+	date = date - new Date();
+	console.log("date");
+	console.log(date);
+
 
 	// Send results to front-end
 	for (var i = 0; i < k; i++){
@@ -182,7 +189,7 @@ function computeIdf(database){
 	return idfTable;
 };
 
-// Calculate tfid and magnitudes of each doc, obtain normalized tfIdfTable
+// Calculate tfid 
 function computeTfIdf(database, idfTable){
 	var dimensions = [ database.length, database[0].length ];
 	var docNum = dimensions[0];
@@ -196,7 +203,20 @@ function computeTfIdf(database, idfTable){
 		for(var y = 0; y < attriNum; y++){ 
 			tfIdfTable[x][y] = (1+Math.log(1+database[x][y])) * idfTable[y]; //tf-idf
 
-			//this part edits the importance of certain vectors
+			
+
+				//decrease importance of no secondary colours
+				if(y == 32){
+					tfIdfTable[x][y] = tfIdfTable[x][y] * 0.1
+				}
+
+				//Increase importance of primary colours
+				if(y <16 ){
+					tfIdfTable[x][y] = tfIdfTable[x][y] * 3
+				}
+
+			
+
 
 			magTable[x] += tfIdfTable[x][y]* tfIdfTable[x][y];
 		}    
@@ -222,8 +242,7 @@ function normalizeQuery(query, idfTable){
 		queryTable[y] = query[y]*idfTable[y];  
 		queryMag += queryTable[y]* queryTable[y];
 	}  
-	console.log("queryTable"); 
-	console.log(queryTable); 
+
 	queryMag = Math.sqrt(queryMag);
 
 	//Normalizing step
@@ -250,8 +269,7 @@ function selectBestK(query, tfIdfTable, k){
 		}    
 	} 
 
-	console.log("cosSimTable");
-	console.log(cosSimTable);
+
 
 	var index = [];
 	while(index.length < k){
@@ -265,8 +283,7 @@ function selectBestK(query, tfIdfTable, k){
 		cosSimTable[max_index]=-1;		//remove largest value and iterate again
 	}  
 
-	console.log("kSimTable latest");
-	console.log(kSimTable);
+
 
 	return index;
 };
