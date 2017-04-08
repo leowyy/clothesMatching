@@ -6,8 +6,10 @@ var attriNum;			// Number of attributes in database
 var queryLabel;			// Image label of query in database
 var queryIndex;			// Index of query in database
 var queryVector;		// Vector of query
+var idfTable;			// Generated once during saveData
+var tfIdfTable;			// Generated once during saveData
 var kSimTable;
-var classifier;
+var classifier;			// Either Tops/Bottoms/Shoes
 
 //get excel database
 function readCSV(evt) {
@@ -35,7 +37,7 @@ function readCSV(evt) {
     });
 };
 
-// Called after reading CSV
+// Passed and called as callback function in readCSV
 function saveData(data) {
     database = data;
 
@@ -45,6 +47,10 @@ function saveData(data) {
     labels = extractLabels();
 	docNum = database.length;
 	attriNum = database[0].length;
+	
+	// Compute tf-idf table once
+	idfTable = computeIdf(database);
+	tfIdfTable = computeTfIdf(database, idfTable);
 };
 
 function extractLabels(){
@@ -91,6 +97,7 @@ function generateRandomQuery(){
 	else {
 		document.getElementById("queryImage").src = createPathToImage(image,0);
 	}
+	document.getElementById("queryLabel").innerHTML = labels[i];
 
 	queryLabel = labels[i];
 	queryIndex = i;
@@ -123,9 +130,6 @@ function generateRandomQuery(){
 };
 
 function retrieveSimilarClothing(){
-	var idfTable = computeIdf(database);
-
-	var tfIdfTable = computeTfIdf(database, idfTable);
 
 	var queryTable = normalizeQuery(queryVector, idfTable);
 	var k = 6;
@@ -133,8 +137,6 @@ function retrieveSimilarClothing(){
 	console.log("index");
 	console.log(index);
 
-	console.log("database"); 
-	console.log(database); 
 	// Send results to front-end
 	for (var i = 0; i < k; i++){
 		document.getElementById("match-label-"+i).innerHTML = labels[index[i]] + " " + kSimTable[i];
@@ -159,8 +161,7 @@ function computeIdf(database){
 	var dimensions = [ database.length, database[0].length ];
 	var docNum = dimensions[0];
 	var attriNum = dimensions[1];
-	console.log("attriNum");
-	console.log(attriNum);
+
 	var idfTable = [];
 	var threshold = 0.7; // Used as a threshold to consider as inside document
 
@@ -270,7 +271,9 @@ function selectBestK(query, tfIdfTable, k){
 	return index;
 };
 
-// Helper functions
+
+
+// ALL HELPER FUNCTIONS
 function randomIntFromInterval(min,max)
 {
     return Math.floor(Math.random()*(max-min+1)+min);
