@@ -7,3 +7,5 @@
 /ir_corpusoutside/Tops/*
 /ir_corpusoutside/Bottoms/*
 /ir_corpusoutside/Shoes/*
+/**/*.jpg
+/**/*.jpeg
